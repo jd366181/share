@@ -1,0 +1,24 @@
+name: build
+# Builds the Share .deb on a macOS runner (real Xcode arm64e/ptrauth toolchain),
+# then uploads the rootful and rootless packages as a downloadable artifact.
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  deb:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ldid and dpkg
+        run: brew install ldid dpkg
+      - name: Run host tests
+        run: python3 tests/test_support.py
+      - name: Build packages
+        run: SDK="$(xcrun --sdk iphoneos --show-sdk-path)" ./build.sh
+      - name: Upload .deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: share-deb
+          path: build/*.deb
+          if-no-files-found: error
